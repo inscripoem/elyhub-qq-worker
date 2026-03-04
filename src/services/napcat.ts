@@ -4,6 +4,7 @@ import { createLogger } from "./logger";
 type ArkShareContact = {
   nickname?: string;
   jumpUrl?: string;
+  legacyUrl?: string;
   avatar?: string;
 };
 
@@ -177,7 +178,7 @@ export class NapcatService {
       return {
         status: "success",
         groupName: groupInfo.group_name ?? null,
-        groupUrl: contact.jumpUrl ?? null,
+        groupUrl: contact.legacyUrl ?? null,
         groupPicUrl: contact.avatar ?? null,
       };
     } catch (err) {
