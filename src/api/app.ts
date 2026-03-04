@@ -6,7 +6,7 @@ import { registerLogRoutes } from "./routes-logs";
 import { registerControlRoutes } from "./routes-control";
 import { registerSyncRoutes } from "./routes-sync";
 
-const UI_DIR = join(process.cwd(), "src/ui");
+const UI_DIR = join(process.cwd(), "dist");
 
 const ADMIN_TOKEN = process.env.WORKER_ADMIN_TOKEN?.trim() ?? "";
 

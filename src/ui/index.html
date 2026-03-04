@@ -4,34 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ElyHub QQ Worker</title>
-
-    <!-- Tailwind v4 browser runtime (no "production" warning) -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style type="text/tailwindcss">
-        @theme {
-            --color-primary: #002FA7;
-            --color-background: #F9FAFB;
-        }
-    </style>
-
-    <!-- cron-input-ui web component -->
-    <link rel="stylesheet" href="https://unpkg.com/cron-input-ui@2.5.0/dist/cron-input-ui.min.css" />
-    <script src="https://unpkg.com/cron-input-ui@2.5.0/dist/locales/zh_CN.js"></script>
-    <script src="https://unpkg.com/cron-input-ui@2.5.0/dist/cron-input-ui.min.js"></script>
-
-    <script type="importmap">
-    {
-        "imports": {
-            "preact": "https://esm.sh/preact@10.22.0",
-            "preact/hooks": "https://esm.sh/preact@10.22.0/hooks",
-            "@preact/signals": "https://esm.sh/@preact/signals@1.3.0?external=preact",
-            "htm/preact": "https://esm.sh/htm@3.1.1/preact?external=preact"
-        }
-    }
-    </script>
 </head>
-<body class="bg-background text-gray-900 font-sans">
-    <div id="app"></div>
-    <script type="module" src="./app.js"></script>
+<body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
 </body>
 </html>
