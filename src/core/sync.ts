@@ -52,9 +52,13 @@ export class SyncService {
     const { updates, recentGroups: fullRecent } = await this.fullSync(cfg, expireAt, cfg.napcatGroupDelay, cfg.napcatIntraGroupDelay);
 
     const allUpdates = [...partialUpdates, ...updates];
+    // Deduplicate by id — fullSync wins (has status + expireAt)
+    const updatesMap = new Map<string, WorkerGroupBatchUpdate>();
+    for (const u of allUpdates) updatesMap.set(u.id, u);
+    const deduplicatedUpdates = [...updatesMap.values()];
 
     let updatedCount = 0;
-    for (const batch of chunkArray(allUpdates, BATCH_LIMIT)) {
+    for (const batch of chunkArray(deduplicatedUpdates, BATCH_LIMIT)) {
       const result = await elyHubClient.postBatch(cfg, batch);
       updatedCount += result.updated.length;
       if (result.notFound.length > 0) {
