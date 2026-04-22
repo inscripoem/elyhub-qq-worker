@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
-import { Card, Tag, Button, Space, App } from 'antd'
+import { useState, useEffect, useCallback } from 'react'
+import { Card, Tag, Button, Space, App, Input, List, Empty } from 'antd'
 import { useAppStore } from '../services/store'
 import { api } from '../services/api'
 import { formatDate, getStateTagColor, getGroupStatusColor } from '../utils/format'
 import { StatusIcon } from '../components/StatusIcon'
+import type { SearchableGroup } from '../services/store'
 
 const STATE_LABELS: Record<string, string> = { idle: '空闲', running: '运行中', stopped: '已停止', error: '异常' }
 const ACTION_LABELS: Record<string, string> = { start: '启动', stop: '停止', restart: '重启' }
@@ -30,6 +31,9 @@ export const Dashboard = () => {
   const [countdown, setCountdown] = useState(0)
   const [syncing, setSyncing] = useState(false)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
+  const [searchKeyword, setSearchKeyword] = useState('')
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchResults, setSearchResults] = useState<SearchableGroup[]>([])
   const status = useAppStore((s) => s.workerStatus)
 
   useEffect(() => {
@@ -70,6 +74,27 @@ export const Dashboard = () => {
       setSyncing(false)
     }
   }
+
+  const handleSearch = useCallback(async (keyword: string) => {
+    if (!status.napcat.connected) {
+      message.warning('Worker 未运行，无法搜索')
+      return
+    }
+    setSearchLoading(true)
+    try {
+      const res = await api.searchGroups(keyword)
+      const groups = res.data ?? []
+      setSearchResults(groups)
+      if (groups.length === 0) {
+        message.info('未找到匹配的群组')
+      }
+    } catch (e) {
+      message.error(`搜索失败：${(e as Error).message}`)
+      setSearchResults([])
+    } finally {
+      setSearchLoading(false)
+    }
+  }, [status.napcat.connected, message])
 
   const fmt = (s: number) => {
     if (s >= 3600) return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`
@@ -152,14 +177,14 @@ export const Dashboard = () => {
             <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
-                  {['群组名称', 'QQ 号', '状态', '更新时间'].map((h) => (
+                  {['别名', '名称', 'QQ 号', '状态', '更新时间'].map((h) => (
                     <th key={h} style={{ padding: '12px 8px 10px 0', textAlign: 'left', fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {status.sync.recentGroups.length === 0
-                  ? <tr><td colSpan={4} style={{ padding: '36px 0', textAlign: 'center', color: '#9CA3AF', fontStyle: 'italic', fontSize: 13 }}>暂无数据</td></tr>
+                  ? <tr><td colSpan={5} style={{ padding: '36px 0', textAlign: 'center', color: '#9CA3AF', fontStyle: 'italic', fontSize: 13 }}>暂无数据</td></tr>
                   : status.sync.recentGroups.map((g) => (
                     <tr
                       key={g.id}
@@ -171,7 +196,8 @@ export const Dashboard = () => {
                         transition: 'background 0.15s',
                       }}
                     >
-                      <td style={{ padding: '10px 8px 10px 0', fontWeight: 500, color: '#111827' }}>{g.name ?? '（未命名）'}</td>
+                      <td style={{ padding: '10px 8px 10px 0', fontWeight: 500, color: '#111827' }}>{g.alias ?? '—'}</td>
+                      <td style={{ padding: '10px 8px 10px 0', color: '#6B7280', fontSize: 14 }}>{g.name ?? '—'}</td>
                       <td style={{ padding: '10px 8px 10px 0', color: '#6B7280', fontFamily: 'monospace', fontSize: 13 }}>{g.qqNumber ?? '—'}</td>
                       <td style={{ padding: '10px 8px 10px 0' }}>
                         <Tag color={getGroupStatusColor(g.status)} style={{ fontWeight: 700, fontSize: 10, textTransform: 'uppercase' }}>
@@ -187,22 +213,68 @@ export const Dashboard = () => {
           </div>
         </Card>
 
-        <Card title={<SectionTitle>同步统计</SectionTitle>} styles={{ body: { padding: '12px 20px 20px' } }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontSize: 14 }}>
-            <div>
-              <div style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>上次运行</div>
-              <div style={{ fontWeight: 500, color: '#374151' }}>{formatDate(status.sync.lastRunAt)}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <Card title={<SectionTitle>同步统计</SectionTitle>} styles={{ body: { padding: '12px 20px 20px' } }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontSize: 14 }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>上次运行</div>
+                <div style={{ fontWeight: 500, color: '#374151' }}>{formatDate(status.sync.lastRunAt)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>上次成功</div>
+                <div style={{ fontWeight: 500, color: '#16A34A' }}>{formatDate(status.sync.lastSuccessAt)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>本次更新数</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: '#002FA7', lineHeight: 1.1 }}>{status.sync.lastUpdatedCount}</div>
+              </div>
             </div>
-            <div>
-              <div style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>上次成功</div>
-              <div style={{ fontWeight: 500, color: '#16A34A' }}>{formatDate(status.sync.lastSuccessAt)}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>本次更新数</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#002FA7', lineHeight: 1.1 }}>{status.sync.lastUpdatedCount}</div>
-            </div>
-          </div>
-        </Card>
+          </Card>
+
+          <Card title={<SectionTitle>群搜索</SectionTitle>} styles={{ body: { padding: '12px 20px 20px' } }}>
+            <Input.Search
+              placeholder="输入关键词搜索 ElyHub 群组"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onSearch={handleSearch}
+              loading={searchLoading}
+              disabled={!isRunning}
+              style={{ marginBottom: 16 }}
+            />
+            {searchResults.length === 0 ? (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={searchLoading ? '搜索中...' : isRunning ? '输入关键词开始搜索' : 'Worker 未运行'}
+                style={{ marginTop: 8 }}
+              />
+            ) : (
+              <List
+                size="small"
+                dataSource={searchResults}
+                renderItem={(g: SearchableGroup) => (
+                  <List.Item style={{ padding: '8px 0', borderBottom: '1px solid #F3F4F6' }}>
+                    <div style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                        <span style={{ fontWeight: 500, color: '#111827', fontSize: 14 }}>
+                          {g.alias ?? g.name ?? '（未命名）'}
+                        </span>
+                        <Tag color={getGroupStatusColor(g.status)} style={{ fontWeight: 700, fontSize: 10, textTransform: 'uppercase' }}>
+                          {g.status}
+                        </Tag>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: '#6B7280' }}>
+                        {g.alias && g.name && (
+                          <span>{g.name}</span>
+                        )}
+                        <span style={{ fontFamily: 'monospace' }}>{g.qqNumber ?? '—'}</span>
+                      </div>
+                    </div>
+                  </List.Item>
+                )}
+              />
+            )}
+          </Card>
+        </div>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { useAppStore, WorkerStatus, LogEntry } from './store'
+import { useAppStore, WorkerStatus, LogEntry, SearchableGroup } from './store'
 
 const BASE = '/api'
 
@@ -63,6 +63,12 @@ export const api = {
 
   async syncNow(): Promise<{ updatedCount: number }> {
     const res = await apiFetch(`${BASE}/sync`, { method: 'POST' })
+    if (!res.ok) throw new Error(`status ${res.status}`)
+    return res.json()
+  },
+
+  async searchGroups(keyword: string): Promise<{ data: SearchableGroup[] }> {
+    const res = await apiFetch(`${BASE}/groups/search?q=${encodeURIComponent(keyword)}`)
     if (!res.ok) throw new Error(`status ${res.status}`)
     return res.json()
   },

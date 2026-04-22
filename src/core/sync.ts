@@ -114,6 +114,7 @@ export class SyncService {
       updates.push({ id: group.id, name: info.groupName, avatarUrl: info.groupPicUrl });
       recentGroups.push({
         id: group.id,
+        alias: group.alias,
         qqNumber: group.qqNumber,
         name: info.groupName ?? group.name,
         status: group.status,
@@ -168,6 +169,7 @@ export class SyncService {
       .slice(0, RECENT_GROUPS_LIMIT)
       .map((g, i) => ({
         id: g.id,
+        alias: g.alias,
         qqNumber: g.qqNumber,
         name:
           infos[i].status === "success"

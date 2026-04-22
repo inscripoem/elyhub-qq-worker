@@ -90,10 +90,12 @@ export class ElyHubClient {
     });
   }
 
-  getGroups(config: WorkerConfig): Promise<WorkerGroupListResponse> {
+  getGroups(config: WorkerConfig, search?: string): Promise<WorkerGroupListResponse> {
+    const qs = new URLSearchParams({ platform: "qq" });
+    if (search) qs.set("search", search);
     return this.request<WorkerGroupListResponse>(
       config,
-      "/api/worker/groups?platform=qq",
+      `/api/worker/groups?${qs.toString()}`,
       { method: "GET" }
     );
   }

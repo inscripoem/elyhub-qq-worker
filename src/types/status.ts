@@ -2,6 +2,7 @@ export type RuntimeState = "idle" | "running" | "stopped" | "error";
 
 export type RecentGroup = {
   id: string;
+  alias: string | null;
   qqNumber: string | null;
   name: string | null;
   status: string;

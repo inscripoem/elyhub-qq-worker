@@ -9,7 +9,7 @@
     "dev:ui": "vite",
     "build": "vite build",
     "start": "bun run src/main.ts",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit && tsc --project src/ui/tsconfig.json --noEmit"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",

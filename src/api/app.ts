@@ -5,6 +5,7 @@ import { registerConfigRoutes } from "./routes-config";
 import { registerLogRoutes } from "./routes-logs";
 import { registerControlRoutes } from "./routes-control";
 import { registerSyncRoutes } from "./routes-sync";
+import { registerGroupRoutes } from "./routes-groups";
 
 const UI_DIR = join(process.cwd(), "dist");
 
@@ -31,6 +32,7 @@ export function createApp(): Elysia {
   registerLogRoutes(app);
   registerControlRoutes(app);
   registerSyncRoutes(app);
+  registerGroupRoutes(app);
 
   app.get("/*", async ({ request }) => {
     const pathname = new URL(request.url).pathname;
